@@ -13,8 +13,9 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 
 # In[2]:
 
-
+print("reading dataset")
 train = pd.read_csv('./train.csv')
+print("reading dataset done")
 
 
 # In[3]:
@@ -99,6 +100,8 @@ X_train, X_test, y_train, y_test = train_test_split(train.drop(['Survived'],axis
 
 
 # In[13]:
+print("split done")
+
 
 
 from sklearn.ensemble import RandomForestClassifier
@@ -113,6 +116,7 @@ rf.fit(X_train,y_train)
 
 # In[15]:
 
+print("creating pkl file")
 
 import pickle as pkl
 pkl.dump(rf,open("model.pkl","wb"))
@@ -122,4 +126,6 @@ pkl.dump(rf,open("model.pkl","wb"))
 
 
 rf_pre=rf.predict(X_test)
+
+print(rf_pre)
 
