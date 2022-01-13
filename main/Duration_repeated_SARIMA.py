@@ -37,30 +37,7 @@ warnings.filterwarnings('ignore')
 # In[3]:
 
 
-df2=pd.DataFrame(columns=['Time','Duration','Title','dayofweek','date'])
-path_to_folders = './CINEMAX/CINEMAX'
-
-for folder in os.listdir(path_to_folders):
-    for root,dirs,files in os.walk(path_to_folders+'/'+folder):
-        for file in files:
-            if file.endswith(".xls"):
-                cinemaxdf=pd.read_excel(os.path.join(path_to_folders+'/'+folder+'/'+file),header=None) # temp DataFrame
-                date=cinemaxdf.iloc[0,0].split()[-3:] # extracting date info (last 3 entries of 1st line)
-                date=" ".join(date) # joining last 3 entries of date into a single string
-                dayofweek=cinemaxdf.iloc[0,0].split()[-4] # extracting day of week (4th entry from last of 1st line)
-                cinemax=cinemaxdf.iloc[2:,:] # 2nd line is blank.. so considering entries from 3rd row onwards
-                cinemax.columns=cinemax.iloc[0] # specifying column name for each column
-                cinemax=cinemax[1:]
-                cinemax.reset_index(drop=True, inplace=True)
-                cinemax=cinemax.iloc[1:,:] # iloc[1:,:] as there is blank space after header containing column names
-                cinemaxnew=cinemax[['Time','Duration','Title','Format Type']] # taking subset of columns
-                cinemaxnew=cinemaxnew.loc[cinemaxnew['Format Type']=='XDCAM'] # considering only XDCAM entries
-                cinemaxnew.reset_index(drop=True,inplace=True)
-                cinemaxnew['dayofweek']=dayofweek
-                cinemaxnew['date']=date
-                cinemaxnew.drop( ['Format Type'], axis=1, inplace=True)
-                df2=df2.append(cinemaxnew) # appending multiple entries for each day to df2
-# df2
+df = pd.read_csv('merged_data.csv')
 
 
 # In[4]:
@@ -81,33 +58,26 @@ def datefxn(date):
 # In[5]:
 
 
-df2['Date']=df2.apply(lambda x: datefxn(x['date']), axis=1)
-df2.drop( ['date'], axis=1, inplace=True)
-df2.sort_values(['Date'], ascending=True, inplace=True)
-df2.reset_index(drop=True,inplace=True)
-# df2
+df['Date']=df.apply(lambda x: datefxn(x['date']), axis=1)
+df.drop( ['date'], axis=1, inplace=True)
+df.sort_values(['Date'], ascending=True, inplace=True)
+df.reset_index(drop=True,inplace=True)
 
 
 # In[6]:
 
 
 # creating df_movies DataFrame with entries having at least 1 hour duration i.e. only movies content
-df_movies = df2[pd.to_datetime(df2['Duration'], format='%H:%M:%S:%f').dt.hour!=0]
+df_movies = df[pd.to_datetime(df['Duration'], format='%H:%M:%S:%f').dt.hour!=0]
 
 
 # In[7]:
 
 
-# df_movies.head()
-
-
-# In[8]:
-
-
 showset=set()
 
 
-# In[9]:
+# In[8]:
 
 
 def newcol(showset,showname):
@@ -118,26 +88,14 @@ def newcol(showset,showname):
         return 0     #new show
 
 
-# In[10]:
+# In[9]:
 
 
+# 0 means new show
 df_movies['newnotnew']=df_movies.apply(lambda x: newcol(showset,x['Title']), axis=1)
-# df_movies          # 0 means new show
 
 
-# In[11]:
-
-
-pd.set_option('display.max_rows', None)
-
-
-# In[12]:
-
-
-# df_movies
-
-
-# In[13]:
+# In[10]:
 
 
 def timefxn(duration):
@@ -151,15 +109,14 @@ def timefxn(duration):
     return datetime.timedelta(hours=x.tm_hour,minutes=x.tm_min,seconds=x.tm_sec).total_seconds()/3600
 
 
-# In[14]:
+# In[11]:
 
 
 df_movies['Duration_in_hr']=df_movies.apply(lambda x: timefxn(x['Duration']), axis=1)
 df_movies.drop( ['Duration'], axis=1, inplace=True)
-# df_movies
 
 
-# In[15]:
+# In[12]:
 
 
 # storing hourly duration of repeated content for each day in x
@@ -170,57 +127,25 @@ merged_df = pd.DataFrame(df_movies.groupby(['Date','dayofweek'])['Duration_in_hr
 merged_df['duration_repeated']=x
 merged_df['%repeatedcontent'] = merged_df['duration_repeated']/merged_df['Duration_in_hr']
 merged_df.reset_index(inplace=True)
-# merged_df
-
-
-# In[16]:
-
-
-def onlydate(date):
-    """
-    This function will classify whether a date belongs to first half (return value of 1) or second half (return value of 2) of the month.
-    
-    :param date: datetime dtype date
-    :return: 1 or 2
-    """
-    date=str(date)
-    if date.strip()[8:10]<'15':
-        return 1
-    else:
-        return 2
-
-
-# In[17]:
-
-
-# new column "half" indicating whether the date belongs to first or second half of the month.
-merged_df['half']=merged_df.apply(lambda x: onlydate(x['Date']), axis=1)
-# merged_df 
 
 
 # ## Set Rolling window size and cap value
 
-# In[18]:
+# In[14]:
 
 
 #Rolling window size (moving average)
 roll_size = 3
 
 
-# In[19]:
+# In[15]:
 
 
 # new column "y" created to store moving averaged values
 merged_df['y'] = merged_df['duration_repeated'].rolling(window=roll_size).mean()
 
 
-# In[20]:
-
-
-# merged_df
-
-
-# In[21]:
+# In[16]:
 
 
 # creating train and test set
@@ -230,33 +155,26 @@ test=merged_df[merged_df['Date']>'2021-09-30']
 
 # # SARIMAX on MA data
 
-# In[22]:
+# In[17]:
 
 
 max_value = 24
 
 
-# In[23]:
+# In[18]:
 
 
 MA_data = merged_df[['Date','y']]
-# MA_data.head()
 
 
-# In[24]:
+# In[19]:
 
 
 MA_data.set_index('Date',inplace=True)
 MA_data.dropna(inplace=True)
 
 
-# In[25]:
-
-
-# MA_data.head()
-
-
-# In[26]:
+# In[20]:
 
 
 MA_train = MA_data.loc['2021-08-03':'2021-09-30']
@@ -265,7 +183,7 @@ MA_test = MA_data.loc['2021-10-01':]
 
 # # auto_arima - to find the best model (minimum AIC value)
 
-# In[27]:
+# In[21]:
 
 
 MA_stepwise_model = auto_arima(MA_data, start_p=1, start_q=1,
@@ -278,95 +196,38 @@ MA_stepwise_model = auto_arima(MA_data, start_p=1, start_q=1,
 # print(MA_stepwise_model.aic())
 
 
-# In[28]:
+# In[22]:
 
 
 print(MA_stepwise_model.summary())
 
 
-# In[29]:
-
-
-# MA_stepwise_model.order
-
-
-# In[30]:
-
-
-# MA_stepwise_model.seasonal_order
-
-
-# In[31]:
+# In[23]:
 
 
 future_forecast = MA_stepwise_model.predict(n_periods=31)
 
 
-# In[32]:
-
-
-# future_forecast
-
-
-# In[33]:
+# In[24]:
 
 
 future_forecast_df = pd.DataFrame(future_forecast,index = MA_test.index,columns=['Prediction'])
 
 
-# In[34]:
+# In[25]:
 
 
 future_forecast_df[future_forecast_df['Prediction']>max_value]=max_value
 
 
-# In[42]:
+# In[26]:
 
 
-# future_forecast_df.head()
+print(future_forecast_df)
 
 
-# In[36]:
+# In[27]:
 
 
-#future_forecast = pd.DataFrame(future_forecast,index = test1.index,columns=['Prediction'])
-pd.concat([MA_test,future_forecast_df],axis=1).plot()
-
-
-# In[37]:
-
-
-pd.concat([MA_data,future_forecast_df],axis=1).plot()
-
-
-# In[38]:
-
-
-print("MAPE on MA value: "+str(round(100*mean_absolute_percentage_error(MA_test['y'],future_forecast_df['Prediction']),2))+"%")
-
-
-# In[39]:
-
-
-print("MAE on MA value: "+str(round(mean_absolute_error(MA_test['y'],future_forecast_df['Prediction']),2))+" hours")
-
-
-# In[40]:
-
-
-print("MAPE on actual value: "+str(round(100*mean_absolute_percentage_error(test['duration_repeated'],
-                                                                            future_forecast_df['Prediction']),2))+"%")
-
-
-# In[41]:
-
-
-print("MAE on actual value: "+str(round(mean_absolute_error(test['duration_repeated'],
-                                                            future_forecast_df['Prediction']),2))+" hours")
-
-
-# In[ ]:
-
-
-
+future_forecast_df.to_csv('future_forecast.csv')
 
