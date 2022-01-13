@@ -11,10 +11,6 @@ import pandas as pd
 import os
 from dateutil.parser import parse
 import matplotlib.pyplot as plt
-import seaborn as sns
-
-from sklearn.metrics import mean_absolute_percentage_error
-from sklearn.metrics import mean_absolute_error
 
 from statsmodels.tsa.seasonal import seasonal_decompose
 import statsmodels.api as sm
