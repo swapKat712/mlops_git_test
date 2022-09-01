@@ -14,7 +14,7 @@ import seaborn as sns
 # In[2]:
 
 print("reading dataset")
-train = pd.read_csv('./train.csv')
+train = pd.read_csv('./train_mod.csv')
 print("reading dataset done")
 
 
