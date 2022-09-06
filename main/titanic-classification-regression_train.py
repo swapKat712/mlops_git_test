@@ -121,7 +121,7 @@ print("creating pkl file")
 import pickle as pkl
 import os
 print(os.getcwd())
-pkl.dump(rf,open('./model.pkl','wb'))
+pkl.dump(rf,open('./model_1.pkl','wb'))
 
 
 # In[16]:
