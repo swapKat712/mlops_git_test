@@ -119,7 +119,9 @@ rf.fit(X_train,y_train)
 print("creating pkl file")
 
 import pickle as pkl
-pkl.dump(rf,open("model.pkl","wb"))
+import os
+print(os.getcwd())
+pkl.dump(rf,open('./model.pkl','wb'))
 
 
 # In[16]:
