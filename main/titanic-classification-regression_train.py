@@ -14,7 +14,11 @@ import numpy as np
 # In[2]:
 
 print("reading dataset")
-train = pd.read_csv('./titanic.csv')
+try:
+    train = pd.read_csv('./titanic.csv')
+except Exception as e:
+    print(str(e))
+    print(repr(e))
 print("reading dataset done")
 
 
