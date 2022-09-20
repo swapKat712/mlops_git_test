@@ -14,7 +14,7 @@ import numpy as np
 # In[2]:
 
 print("reading dataset")
-train = pd.read_csv('./train_mod.csv')
+train = pd.read_csv('./titanic.csv')
 print("reading dataset done")
 
 
