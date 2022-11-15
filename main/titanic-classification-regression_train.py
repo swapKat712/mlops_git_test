@@ -15,7 +15,7 @@ import numpy as np
 
 print("reading dataset")
 try:
-    train = pd.read_csv('./train_mod.csv')
+    train = pd.read_csv('./train_mod2.csv')
 except Exception as e:
     print(str(e))
     print(repr(e))
